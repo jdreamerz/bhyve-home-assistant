@@ -66,26 +66,21 @@ async def async_setup(hass, config):
     """Set up the BHyve component."""
 
     conf = config[DOMAIN]
-    packet_dump = conf.get(CONF_PACKET_DUMP)
-    conf_dir = conf.get(CONF_CONF_DIR)
+    if conf is None:
+        return True
+    
+    hass.async_create_task(
+        hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": SOURCE_IMPORT}, data=conf
+        )
+    )
 
-    if conf_dir == "":
-        conf_dir = hass.config.config_dir + "/.bhyve"
+    return True
 
-    # Create storage/scratch directory.
-    try:
-        if not os.path.exists(conf_dir):
-            os.mkdir(conf_dir)
-    except Exception as err:
-        _LOGGER.info("Could not create storage dir: %s", err)
-        pass
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     async def async_update_callback(data):
-        if data is not None and packet_dump:
-            dump_file = conf_dir + "/" + "packets.dump"
-            with open(dump_file, "a") as dump:
-                dump.write(pprint.pformat(data, indent=2) + "\n")
-
         event = data.get("event")
         device_id = None
         program_id = None
@@ -109,8 +104,8 @@ async def async_setup(hass, config):
 
     try:
         bhyve = Client(
-            conf[CONF_USERNAME],
-            conf[CONF_PASSWORD],
+            entry.data[CONF_USERNAME],
+            entry.data[CONF_PASSWORD],
             loop=hass.loop,
             session=session,
             async_callback=async_update_callback,

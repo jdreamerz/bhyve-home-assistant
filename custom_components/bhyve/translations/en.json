@@ -1,0 +1,11 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Already configured."
+    },
+    "error": {
+      "username": "Username is required",
+      "password": "Password is required"
+    }
+  }
+}
